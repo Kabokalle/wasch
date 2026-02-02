@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Waschguide" />
   <meta name="theme-color" content="#0f172a" />
-  <title>Vera wäscht</title>
+  <title>Veras Bomann Master-Guide</title>
   <style>
     :root { 
       --primary: #ff4d8d;    /* Kräftiges Candy Pink */
@@ -148,6 +148,33 @@
     }
     .maint-item b { color: var(--safe); }
     .freq { font-size: 0.8rem; color: var(--secondary); display: block; margin-top: 5px; }
+    
+    /* Checkliste */
+    .checklist { margin: 15px 0; }
+    .check-item {
+      background: #fff; padding: 16px; border-radius: 18px; margin-bottom: 10px;
+      border: 3px solid #ffdae9; display: flex; align-items: center; gap: 12px;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .check-item:active { transform: scale(0.98); }
+    .check-item.checked { 
+      background: #fff0f5; border-color: var(--safe); 
+    }
+    .check-item.checked .check-box { color: var(--safe); }
+    .check-box { font-size: 1.4rem; min-width: 30px; }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    @keyframes praisePopup {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      40% { transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -80%) scale(0.8); }
+    }
   </style>
 </head>
 <body onload="initApp()">
@@ -173,10 +200,13 @@
         <button style="background:#fff0f5; color:var(--sos); border-color:var(--sos);" onclick="tap(); showStep('stain-sos')">🆘 Flecken SOS</button>
         <button style="background:#fff0f5; color:var(--secondary);" onclick="tap(); showStep('maintenance')">⚙️ Wartung</button>
     </div>
+    <div style="margin-top: 10px;">
+        <button style="background:#fff0f5; color:var(--text); width:100%;" onclick="tap(); showStep('sorting')">👚 Sortier-Hilfe</button>
+    </div>
   </div>
 
   <div id="step2" class="step-box">
-    <h2>Gute Wahl.</h2>
+    <h2 id="choice-praise">Gute Wahl! 👍</h2>
     <p id="mode-question" style="color: var(--text); font-weight: 600;"></p>
     <div class="grid" id="mode-grid">
       <button class="mode-btn" onclick="tap(); selectMode('wash')"><span>🧼</span>Nur Waschen</button>
@@ -236,22 +266,42 @@
 
   <div id="step5" class="step-box">
     <h2>3. Letzter Check</h2>
-    <div class="instruction-card">
-      <ul style="margin: 0; padding-left: 20px; line-height: 2.2;">
-        <li>Tür ist sicher zugeklickt.</li>
-        <li id="extra-hint">Die Trommel hat noch Platz.</li>
-      </ul>
+    <p style="color: var(--secondary); font-size: 0.9rem; margin-bottom: 15px;">Alles angetippt? Dann kann's losgehen!</p>
+    
+    <div class="checklist">
+      <div class="check-item" onclick="tap(); toggleCheck(this)">
+        <span class="check-box">☐</span>
+        <span>Taschen geleert (Taschentücher! 😱)</span>
+      </div>
+      <div class="check-item" onclick="tap(); toggleCheck(this)">
+        <span class="check-box">☐</span>
+        <span>Reißverschlüsse geschlossen</span>
+      </div>
+      <div class="check-item" onclick="tap(); toggleCheck(this)">
+        <span class="check-box">☐</span>
+        <span>BHs im Wäschesack</span>
+      </div>
+      <div class="check-item" onclick="tap(); toggleCheck(this)">
+        <span class="check-box">☐</span>
+        <span>Tür ist zugeklickt</span>
+      </div>
+      <div class="check-item" onclick="tap(); toggleCheck(this)">
+        <span class="check-box">☐</span>
+        <span>Trommel nicht zu voll</span>
+      </div>
     </div>
-    <p id="dynamic-hint-final" style="text-align: center; margin-bottom: 5px; font-size: 0.95rem; color: var(--accent);"></p>
-    <button class="next" style="background: var(--safe); color: white;" onclick="tapSuccess(); finish()">Programm starten ✅</button>
+    
+    <p id="dynamic-hint-final" style="text-align: center; margin: 15px 0 5px; font-size: 0.95rem; color: var(--accent);"></p>
+    <button id="start-btn" class="next" style="background: #ccc; color: #666;" onclick="tryStart()" disabled>Erst alle Punkte abhaken ☝️</button>
     <button class="next" class="next back-btn" onclick="tap(); backFromStep5()">← Zurück</button>
   </div>
 
   <div id="success" class="step-box" style="text-align: center;">
-    <div style="font-size: 4rem; margin: 20px 0;">🫧</div>
+    <div style="font-size: 4rem; margin: 20px 0;" id="success-emoji">🫧</div>
     <h2 style="color: var(--safe);">Läuft perfekt!</h2>
-    <p id="praise-text" style="font-weight: 500; color: var(--accent); margin-bottom: 20px;"></p>
-    <button class="next" onclick="tap(); location.reload()">Neuer Waschgang</button>
+    <p id="praise-text" style="font-weight: 600; color: var(--accent); margin-bottom: 10px; font-size: 1.1rem;"></p>
+    <p style="color: var(--secondary); font-size: 0.9rem; margin-bottom: 20px;">Deine Wäsche ist in besten Händen! 💕</p>
+    <button class="next" onclick="tap(); location.reload()">Neuer Waschgang 🌸</button>
   </div>
 
   <!-- DAUNEN ZWISCHENSCHRITT -->
@@ -378,6 +428,74 @@
     <button class="next" onclick="tap(); showStep(1)">← Zurück</button>
   </div>
 
+  <!-- SORTIER-HILFE -->
+  <div id="sorting" class="step-box">
+    <h2>👚 Sortier-Hilfe</h2>
+    <p style="color: var(--secondary); font-size: 0.9rem; margin-bottom: 15px;">So sortierst du richtig!</p>
+    
+    <div class="maint-item" style="border-left-color: #ffffff;">
+      <b>⚪ Weißwäsche</b> <span style="color:var(--secondary);">60-90°C</span><br>
+      Weiße T-Shirts, Unterwäsche, Socken, Bettwäsche, Geschirrtücher, Stofftaschentücher.
+      <span class="freq">💡 Vollwaschmittel hält weiß strahlend</span>
+    </div>
+    
+    <div class="maint-item" style="border-left-color: #ff6b6b;">
+      <b>🌈 Buntwäsche</b> <span style="color:var(--secondary);">30-40°C</span><br>
+      Farbige T-Shirts, Pullover, Hosen, Röcke, bunte Bettwäsche, Stoffservietten.
+      <span class="freq">💡 Colorwaschmittel schützt die Farben</span>
+    </div>
+    
+    <div class="maint-item" style="border-left-color: #1a1a2e;">
+      <b>🖤 Dunkles & Schwarz</b> <span style="color:var(--secondary);">30°C, auf links</span><br>
+      Schwarze Jeans, dunkle Tops, Leggings, dunkle Handtücher.
+      <span class="freq">💡 Separat waschen verhindert Flusen</span>
+    </div>
+    
+    <div class="maint-item" style="border-left-color: var(--dry);">
+      <b>🛁 Handtücher & Bettwäsche</b> <span style="color:var(--secondary);">60°C</span><br>
+      Handtücher, Waschlappen, Bettlaken, Kissenbezüge, Bademäntel.
+      <span class="freq">💡 60°C tötet Bakterien ab</span>
+    </div>
+    
+    <div class="maint-item" style="border-left-color: #a8dadc;">
+      <b>👗 Feinwäsche</b> <span style="color:var(--secondary);">30°C, Schongang</span><br>
+      Blusen, Seide, Spitze, BHs (im Wäschesack!), Strumpfhosen, Kleider.
+      <span class="freq">💡 Wäschesack schützt empfindliche Teile</span>
+    </div>
+    
+    <div class="maint-item" style="border-left-color: #ddb892;">
+      <b>🐑 Wolle & Strick</b> <span style="color:var(--secondary);">30°C, Wollprogramm</span><br>
+      Wollpullover, Strickjacken, Kaschmirschals, Wollsocken.
+      <span class="freq">💡 Niemals schleudern – nur sanft drücken</span>
+    </div>
+    
+    <div class="maint-item" style="border-left-color: var(--safe);">
+      <b>🏃 Sportkleidung</b> <span style="color:var(--secondary);">30-40°C</span><br>
+      Funktionsshirts, Sport-BHs, Laufhosen, Yogawear, Trainingsanzüge.
+      <span class="freq">💡 Kein Weichspüler – zerstört Funktion</span>
+    </div>
+
+    <div class="warning-card" style="margin-top: 20px; border-color: var(--accent); background: #fff0f5;">
+      <strong style="color: var(--accent);">⚠️ Niemals zusammen:</strong><br>
+      <span style="color: var(--text);">
+      • Weiß + Bunt (Verfärbung!)<br>
+      • Handtücher + Wolle (Flusen!)<br>
+      • Neues Buntes + Alles andere (färbt aus!)<br>
+      • Reißverschlüsse offen + Feinwäsche (Schäden!)
+      </span>
+    </div>
+    
+    <div class="instruction-card" style="margin-top: 15px;">
+      <strong>✅ Vor dem Waschen immer:</strong><br>
+      • Taschen leeren (Taschentücher! 😱)<br>
+      • Reißverschlüsse schließen<br>
+      • BHs in Wäschesack<br>
+      • Stark Verschmutztes vorbehandeln
+    </div>
+    
+    <button class="next" onclick="tap(); showStep(1)">← Zurück</button>
+  </div>
+
 </div>
 
 <script>
@@ -396,10 +514,39 @@
     { id: 'anti', label: 'Allerg.', angle: 270 }
   ];
 
-  const hintPoolWash = ["Weniger ist oft mehr.", "Deine Kleidung dankt es dir.", "Perfekt dosiert.", "Fingerspitzengefühl zählt."];
-  const hintPoolFinal = ["Vera, du hast alles perfekt vorbereitet.", "Alles im Griff – wie immer.", "Du hast an jedes Detail gedacht."];
-  const welcomePool = [{h: "Gutes Gelingen, Vera! ✨", s: "Was waschen wir heute?"}, {h: "Hallo Vera! 👋", s: "Bereit für Frische?"}];
-  const dryPool = ["Aktiviere Schranktrocken. Weniger Beladung = flauschiger!", "Halbe Füllung trocknet am besten.", "Luft braucht Platz zum Zirkulieren!"];
+  const hintPoolWash = ["Weniger ist oft mehr.", "Deine Kleidung dankt es dir.", "Perfekt dosiert.", "Fingerspitzengefühl zählt.", "Du machst das super!"];
+  const hintPoolFinal = ["Vera, du hast alles perfekt vorbereitet.", "Alles im Griff – wie immer.", "Du hast an jedes Detail gedacht.", "So gründlich wie immer!", "Vera, du bist ein Profi!"];
+  const welcomePool = [
+    {h: "Gutes Gelingen, Vera! ✨", s: "Was waschen wir heute?"}, 
+    {h: "Hallo Vera! 👋", s: "Bereit für Frische?"},
+    {h: "Schön, dass du da bist! 💕", s: "Lass uns loslegen!"},
+    {h: "Hey Vera! 🌸", s: "Auf geht's zur frischen Wäsche!"}
+  ];
+  const dryPool = ["Aktiviere Schranktrocken. Weniger Beladung = flauschiger!", "Halbe Füllung trocknet am besten.", "Luft braucht Platz zum Zirkulieren!", "Du weißt genau was du tust!"];
+  
+  // Lob beim Abhaken der Checkliste
+  const checkPraise = ["Super! ✓", "Perfekt! 👍", "Gut gemacht! ⭐", "Weiter so! 💪", "Richtig! ✨", "Prima! 🌟", "Top! 👏", "Klasse! 💖"];
+  
+  // Lob beim Programmstart
+  const startPraise = [
+    "Stark, Vera! Du hast alles richtig gemacht! 💪",
+    "Perfekt organisiert – wie immer! ⭐",
+    "Du bist ein Wasch-Profi! 🏆",
+    "Hervorragend vorbereitet! 👏",
+    "Alles bestens – deine Wäsche wird das lieben! 💕",
+    "Super gemacht, Vera! 🌟",
+    "Du hast den Dreh raus! 🎯",
+    "Besser geht's nicht! 💖"
+  ];
+  
+  // Lob bei guter Programmwahl
+  const choicePraise = [
+    "Gute Wahl! 👍",
+    "Perfekte Entscheidung! ⭐",
+    "Genau richtig! ✨",
+    "Das passt perfekt! 💕",
+    "Sehr gut gewählt! 🌟"
+  ];
 
   // Haptic Feedback
   function tap() {
@@ -467,6 +614,9 @@
     state.type = type; state.prog = prog; state.det = det; state.temp = temp;
     const angles = { baumwolle:0, kochwaesche:0, hygiene:0, mix:110, sport:75, anti:270, wolle:150, daunen:45, schnell:190, pflege:40 };
     state.deg = angles[type] || 0;
+    
+    // Zufälliges Lob für die Programmwahl
+    document.getElementById('choice-praise').innerText = choicePraise[Math.floor(Math.random() * choicePraise.length)];
     
     if (type === 'daunen') {
       document.getElementById('mode-question').innerText = `Daunen werden erst gewaschen, dann getrocknet.`;
@@ -554,17 +704,95 @@
     const id = (typeof n === 'string') ? n : 'step' + n;
     document.getElementById(id).classList.add('active');
     window.scrollTo(0,0);
+    
+    // Checkliste zurücksetzen wenn Step 5 angezeigt wird
+    if (id === 'step5') {
+      resetChecklist();
+    }
   }
 
   function finish() { 
-    const praises = ["Stark, Vera!", "Du hast es drauf!", "Perfekt organisiert.", "Wie ein Profi."];
-    document.getElementById('praise-text').innerText = praises[Math.floor(Math.random() * praises.length)];
+    document.getElementById('praise-text').innerText = startPraise[Math.floor(Math.random() * startPraise.length)];
     
     if (state.type === 'daunen' && state.mode === 'wash') {
       showStep('daunen-tennis');
     } else {
       showStep('success');
     }
+  }
+
+  function toggleCheck(item) {
+    item.classList.toggle('checked');
+    const box = item.querySelector('.check-box');
+    const isChecked = item.classList.contains('checked');
+    box.innerText = isChecked ? '☑' : '☐';
+    
+    // Kurzes Lob einblenden beim Abhaken
+    if (isChecked) {
+      showQuickPraise(checkPraise[Math.floor(Math.random() * checkPraise.length)]);
+    }
+    
+    updateStartButton();
+  }
+
+  function showQuickPraise(text) {
+    // Existierendes Lob entfernen
+    const existing = document.getElementById('quick-praise');
+    if (existing) existing.remove();
+    
+    // Neues Lob erstellen
+    const praise = document.createElement('div');
+    praise.id = 'quick-praise';
+    praise.innerText = text;
+    praise.style.cssText = `
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: var(--accent); color: white; padding: 15px 25px; 
+      border-radius: 20px; font-weight: bold; font-size: 1.2rem;
+      z-index: 1000; animation: praisePopup 0.8s ease-out forwards;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    `;
+    document.body.appendChild(praise);
+    
+    // Nach Animation entfernen
+    setTimeout(() => praise.remove(), 800);
+  }
+
+  function updateStartButton() {
+    const allChecked = document.querySelectorAll('.check-item').length === 
+                       document.querySelectorAll('.check-item.checked').length;
+    const btn = document.getElementById('start-btn');
+    
+    if (allChecked) {
+      btn.disabled = false;
+      btn.style.background = 'var(--safe)';
+      btn.style.color = 'white';
+      btn.innerText = 'Programm starten ✅';
+      btn.onclick = function() { tapSuccess(); finish(); };
+      
+      // Extra Lob wenn alles abgehakt
+      showQuickPraise("Alles erledigt! 🎉");
+    } else {
+      btn.disabled = true;
+      btn.style.background = '#ccc';
+      btn.style.color = '#666';
+      btn.innerText = 'Erst alle Punkte abhaken ☝️';
+      btn.onclick = function() { tryStart(); };
+    }
+  }
+
+  function tryStart() {
+    // Kurzes Wackeln wenn nicht alle abgehakt
+    const btn = document.getElementById('start-btn');
+    btn.style.animation = 'shake 0.3s';
+    setTimeout(() => btn.style.animation = '', 300);
+  }
+
+  function resetChecklist() {
+    document.querySelectorAll('.check-item').forEach(item => {
+      item.classList.remove('checked');
+      item.querySelector('.check-box').innerText = '☐';
+    });
+    updateStartButton();
   }
 </script>
 </body>
